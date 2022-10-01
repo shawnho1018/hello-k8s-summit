@@ -43,6 +43,9 @@ jobs:
     # Alternative option - authentication via credentials json
     - name: Set up slsa-default-generator
       id: set-slsa-generator
+      shell: bash
+      env:
+        GITHUB_CONTEXT: "${{ toJSON(github) }}"      
       run: |-
         curl -sfLo slsa-github-generator https://github.com/slsa-framework/slsa-github-generator/releases/download/v1.2.0/slsa-generator-generic-linux-amd64
         chmod u+x ./slsa-github-generator
