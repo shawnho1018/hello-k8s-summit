@@ -68,7 +68,7 @@ jobs:
       digest: ${{ needs.build.outputs.digest }}
       registry-username: _json_key
       # TODO(https://github.com/slsa-framework/slsa-github-generator/issues/492): Remove after GA release.
-      compile-generator: false
+      compile-generator: true
     secrets:
       registry-password: ${{ secrets.GCP_CREDENTIALS }}
 
