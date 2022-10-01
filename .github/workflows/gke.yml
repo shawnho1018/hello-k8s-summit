@@ -89,7 +89,7 @@ jobs:
   #     registry-password: ${{ secrets.GCP_CREDENTIALS }}
 
   setup-and-deploy:
-    needs: [build, provenance]
+    needs: [build]
     name: Setup and Deploy
     runs-on: ubuntu-latest
 
