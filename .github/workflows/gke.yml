@@ -41,6 +41,16 @@ jobs:
       run: |-
         gcloud --quiet auth configure-docker gcr.io
     # Alternative option - authentication via credentials json
+    - name: Set up slsa-default-generator
+      id: set-slsa-generator
+      run: |-
+        curl -sfLo slsa-github-generator https://github.com/slsa-framework/slsa-github-generator/releases/download/v1.2.0/slsa-generator-generic-linux-amd64
+        chmod u+x ./slsa-github-generator
+        ./slsa-github-generator attest -p "predicate-slsa3" -s $(echo "slsa3" | base64 )
+        cat predicate-slsa3
+    - name: Dump GitHub context
+      id: github_context_step
+      run: echo '${{ toJSON(github) }}'      
 
     - name: Build
       id: build
@@ -50,16 +60,7 @@ jobs:
           --build-arg GITHUB_SHA="$GITHUB_SHA" \
           --build-arg GITHUB_REF="$GITHUB_REF" \
           .
-    - name: Set up slsa-default-generator
-      id: set-slsa-generator
-      run: |-
-        curl -sfLo slsa-github-generator https://github.com/slsa-framework/slsa-github-generator/releases/download/v1.2.0/slsa-generator-generic-linux-amd64
-        chmod u+x ./slsa-github-generator
-        ./slsa-github-generator attest -p "predicate-slsa3" -s $(echo "slsa3" | base64 )
-        echo predicate-slsa3
-    - name: Dump GitHub context
-      id: github_context_step
-      run: echo '${{ toJSON(github) }}'      
+
     # Push the Docker image to Google Artifact Registry
     - name: Publish
       run: |-
