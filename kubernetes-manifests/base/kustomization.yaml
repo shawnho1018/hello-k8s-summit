@@ -1,4 +1,4 @@
 resources:
-- 0_hello-namespace.yaml
+- 0_hello-ns.yaml
 - 1_hello-deployment.yaml
 - 2_hello-service.yaml
