@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: server
-        image: go-hello-world
+        image: IMAGE_LOCATION
         ports:
         - containerPort: 8080
         env:
