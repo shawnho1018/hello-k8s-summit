@@ -8,6 +8,7 @@
 .idea/
 .readmes/
 .vscode/
+test-code/
 # delve output
 debug
 
