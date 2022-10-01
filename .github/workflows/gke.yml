@@ -10,12 +10,18 @@ env:
   GKE_CLUSTER: production    # TODO: update to cluster name
   GKE_ZONE: asia-east1-a	   # TODO: update to cluster zone
   DEPLOYMENT_NAME: go-hello-world # TODO: update deployment name if changed in deployment.yaml
-  IMAGE: hello-k8s-summit
-
+  IMAGE_NAME: hello-k8s-summit
+  IMAGE_REGISTRY: ghcr.io
 jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+      digest: ${{ steps.build.outputs.digest }}
 
     # Add "id-token" with the intended permissions.
     permissions:
@@ -42,12 +48,26 @@ jobs:
     # Alternative option - authentication via credentials json
 
     - name: Build
+      id: build
       run: |-
         docker build \
-          --tag "gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA" \
+          --tag "gcr.io/$PROJECT_ID/$IMAGE_NAME:$GITHUB_SHA" \
           --build-arg GITHUB_SHA="$GITHUB_SHA" \
           --build-arg GITHUB_REF="$GITHUB_REF" \
           .
+    - name: Dump GitHub context
+      id: github_context_step
+      run: echo '${{ toJSON(github) }}'
+    - name: Dump job context
+      run: echo '${{ toJSON(job) }}'
+    - name: Dump steps context
+      run: echo '${{ toJSON(steps) }}'
+    - name: Dump runner context
+      run: echo '${{ toJSON(runner) }}'
+    - name: Dump strategy context
+      run: echo '${{ toJSON(strategy) }}'
+    - name: Dump matrix context
+      run: echo '${{ toJSON(matrix) }}'
     # Push the Docker image to Google Artifact Registry
     - name: Publish
       run: |-
@@ -57,21 +77,21 @@ jobs:
       run: |
         # NOTE: Set the image as an output because the `env` context is not
         # available to the inputs of a reusable workflow call.
-        image_name="gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA"
+        image_name="gcr.io/$PROJECT_ID/$IMAGE_NAME:$GITHUB_SHA"
         echo "::set-output name=image::$image_name"
-  provenance:
-    needs: [build]
-    # TODO(https://github.com/slsa-framework/slsa-github-generator/issues/492): Use a tagged release once we have one.
-    #uses: shawnho1018/hello-k8s-summit/.github/workflows/generator_container_slsa3.yml@master
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@main
-    with:
-      image: ${{ needs.build.outputs.tag }}
-      digest: ${{ needs.build.outputs.digest }}
-      registry-username: _json_key
-      # TODO(https://github.com/slsa-framework/slsa-github-generator/issues/492): Remove after GA release.
-      compile-generator: true
-    secrets:
-      registry-password: ${{ secrets.GCP_CREDENTIALS }}
+  # provenance:
+  #   needs: [build]
+  #   # TODO(https://github.com/slsa-framework/slsa-github-generator/issues/492): Use a tagged release once we have one.
+  #   #uses: shawnho1018/hello-k8s-summit/.github/workflows/generator_container_slsa3.yml@master
+  #   uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@main
+  #   with:
+  #     image: ${{ needs.build.outputs.tag }}
+  #     digest: ${{ needs.build.outputs.digest }}
+  #     registry-username: _json_key
+  #     # TODO(https://github.com/slsa-framework/slsa-github-generator/issues/492): Remove after GA release.
+  #     compile-generator: true
+  #   secrets:
+  #     registry-password: ${{ secrets.GCP_CREDENTIALS }}
 
   setup-and-deploy:
     needs: [build, provenance]
