@@ -102,8 +102,8 @@ jobs:
       run: |-
         # replacing the image name in the k8s template
         pushd kubernetes-manifests/dev
-        ./kustomize edit set image IMAGE_LOCATION=gcr.io/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA
-        ./kustomize build ./ | kubectl apply -f -
+        kustomize edit set image IMAGE_LOCATION=gcr.io/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA
+        kustomize build ./ | kubectl apply -f -
         popd
         kubectl rollout status deployment/$DEPLOYMENT_NAME
         kubectl get services -o wide
