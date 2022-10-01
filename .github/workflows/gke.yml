@@ -50,8 +50,8 @@ jobs:
         curl -sfLo slsa-github-generator https://github.com/slsa-framework/slsa-github-generator/releases/download/v1.2.0/slsa-generator-generic-linux-amd64
         chmod u+x ./slsa-github-generator
         echo "foo" > artifact1
-        ./slsa-github-generator attest -g "predicate-slsa3" --subjects $(sha256sum artifact1 | base64 -w0)
-        cat predicate-slsa3
+        ./slsa-github-generator attest -g "slsa3.intoto.jsonl" --subjects $(sha256sum artifact1 | base64 -w0)
+        cat slsa3.intoto.jsonl
     - name: Dump GitHub context
       id: github_context_step
       run: echo '${{ toJSON(github) }}'      
