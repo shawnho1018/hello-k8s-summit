@@ -38,7 +38,7 @@ jobs:
 
     - name: Docker configuration
       run: |-
-        gcloud --quiet auth configure-docker gcr.io/${PROJECT_ID}
+        gcloud --quiet auth configure-docker gcr.io
     # Alternative option - authentication via credentials json
 
     - name: Build
