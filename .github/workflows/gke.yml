@@ -52,10 +52,28 @@ jobs:
     - name: Publish
       run: |-
         docker push "gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA"
-
+    - name: Output image
+      id: image
+      run: |
+        # NOTE: Set the image as an output because the `env` context is not
+        # available to the inputs of a reusable workflow call.
+        image_name="gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA"
+        echo "::set-output name=image::$image_name"
+provenance:
+  needs: [build]
+  # TODO(https://github.com/slsa-framework/slsa-github-generator/issues/492): Use a tagged release once we have one.
+  uses: shawnho1018/hello-k8s-summit/.github/workflows/generator_container_slsa3.yml@master
+  with:
+    image: ${{ needs.build.outputs.tag }}
+    digest: ${{ needs.build.outputs.digest }}
+    registry-username: _json_key
+    # TODO(https://github.com/slsa-framework/slsa-github-generator/issues/492): Remove after GA release.
+    compile-generator: false
+  secrets:
+    registry-password: ${{ secrets.GCP_CREDENTIALS }}
 
   setup-and-deploy:
-    needs: [build]
+    needs: [build, provenance]
     name: Setup and Deploy
     runs-on: ubuntu-latest
 
