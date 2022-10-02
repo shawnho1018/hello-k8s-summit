@@ -133,6 +133,7 @@ jobs:
     - name: Set up GKE credentials
       run: |-
         gcloud container clusters get-credentials "$GKE_CLUSTER" --zone "$GKE_ZONE"
+        gcloud auth configure-docker asia-east1-docker.pkg.dev
     # Deploy sample image to the GKE cluster
     # Set up kustomize
     - name: Set up Kubectl and Kustomize
