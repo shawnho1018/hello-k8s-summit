@@ -57,27 +57,32 @@ jobs:
     - name: Dump GitHub context
       id: github_context_step
       run: echo '${{ toJSON(github) }}'      
-
-    - name: Build
-      id: build
-      run: |-
-        docker build \
-          --tag "gcr.io/$PROJECT_ID/$IMAGE_NAME:$GITHUB_SHA" \
-          --build-arg GITHUB_SHA="$GITHUB_SHA" \
-          --build-arg GITHUB_REF="$GITHUB_REF" \
-          .
-
-    # Push the Docker image to Google Artifact Registry
-    - name: Publish
-      run: |-
-        docker push "asia-east1-docker.pkg.dev/$PROJECT_ID/slsa-demo/$IMAGE_NAME:$GITHUB_SHA"
-    - name: Output image
+    - name: Build and Push image
       id: image
       run: |
-        # NOTE: Set the image as an output because the `env` context is not
-        # available to the inputs of a reusable workflow call.
+        gcloud builds submit --pack=image=asia-east1-docker.pkg.dev/$PROJECT_ID/slsa-demo/$IMAGE_NAME:$GITHUB_SHA
         image_name="asia-east1-docker.pkg.dev/$PROJECT_ID/slsa-demo/$IMAGE_NAME:$GITHUB_SHA"
         echo "::set-output name=image::$image_name"
+        gcloud artifacts docker images describe ${image_name} --show-provenance
+    # - name: Build
+    #   id: build
+    #   run: |-
+    #     docker build \
+    #       --tag "asia-east1-docker.pkg.dev/$PROJECT_ID/slsa-demo/$IMAGE_NAME:$GITHUB_SHA" \
+    #       --build-arg GITHUB_SHA="$GITHUB_SHA" \
+    #       --build-arg GITHUB_REF="$GITHUB_REF" \
+    #       .
+    # # Push the Docker image to Google Artifact Registry
+    # - name: Publish
+    #   run: |-
+    #     docker push "asia-east1-docker.pkg.dev/$PROJECT_ID/slsa-demo/$IMAGE_NAME:$GITHUB_SHA"
+    # - name: Output image
+    #   id: image
+    #   run: |
+    #     # NOTE: Set the image as an output because the `env` context is not
+    #     # available to the inputs of a reusable workflow call.
+    #     image_name="asia-east1-docker.pkg.dev/$PROJECT_ID/slsa-demo/$IMAGE_NAME:$GITHUB_SHA"
+    #     echo "::set-output name=image::$image_name"
   # provenance:
   #   needs: [build]
   #   # TODO(https://github.com/slsa-framework/slsa-github-generator/issues/492): Use a tagged release once we have one.
