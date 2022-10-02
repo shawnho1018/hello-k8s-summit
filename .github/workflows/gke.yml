@@ -70,13 +70,13 @@ jobs:
     # Push the Docker image to Google Artifact Registry
     - name: Publish
       run: |-
-        docker push "gcr.io/$PROJECT_ID/$IMAGE_NAME:$GITHUB_SHA"
+        docker push "asia-east1-docker.pkg.dev/$PROJECT_ID/slsa-demo/$IMAGE_NAME:$GITHUB_SHA"
     - name: Output image
       id: image
       run: |
         # NOTE: Set the image as an output because the `env` context is not
         # available to the inputs of a reusable workflow call.
-        image_name="gcr.io/$PROJECT_ID/$IMAGE_NAME:$GITHUB_SHA"
+        image_name="asia-east1-docker.pkg.dev/$PROJECT_ID/slsa-demo/$IMAGE_NAME:$GITHUB_SHA"
         echo "::set-output name=image::$image_name"
   # provenance:
   #   needs: [build]
@@ -142,7 +142,7 @@ jobs:
         # replacing the image name in the k8s template
         ls -l ./kustomize
         pushd kubernetes-manifests/dev
-        ../../kustomize edit set image IMAGE_LOCATION=gcr.io/$PROJECT_ID/$IMAGE_NAME:$GITHUB_SHA
+        ../../kustomize edit set image IMAGE_LOCATION=asia-east1-docker.pkg.dev/$PROJECT_ID/slsa-demo/$IMAGE_NAME:$GITHUB_SHA
         ../../kustomize build ./ | ../../kubectl apply -f -
         popd
         ./kubectl rollout status deployment/$DEPLOYMENT_NAME -n dev
