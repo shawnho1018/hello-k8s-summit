@@ -138,16 +138,14 @@ jobs:
     - name: Set up Kubectl and Kustomize
       run: |-
         curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-        chmod u+x ./kubectl
+        chmod u+x ./kubectl && mv ./kubectl /usr/local/bin
         curl -sfLo kustomize https://github.com/kubernetes-sigs/kustomize/releases/download/v3.1.0/kustomize_3.1.0_linux_amd64
-        chmod u+x ./kustomize
+        chmod u+x ./kustomize && mv ./kustomize /usr/local/bin
         export PATH=$(pwd):$PATH
 
     - name: Deploy
       run: |-
         # replacing the image name in the k8s template
-        which kustomize
-        ls -l ./kustomize
         pushd kubernetes-manifests/dev
         ../../kustomize edit set image IMAGE_LOCATION=asia-east1-docker.pkg.dev/$PROJECT_ID/slsa-demo/$IMAGE_NAME:$GITHUB_SHA
         ../../kustomize build ./ | ../../kubectl apply -f -
