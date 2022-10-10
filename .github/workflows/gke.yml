@@ -7,6 +7,9 @@ on:
 
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+  COSIGN_PUB: ${{ secrets.COSIGN_PUB }}
+  COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
   GKE_CLUSTER: production    # TODO: update to cluster name
   GKE_ZONE: asia-east1-a	   # TODO: update to cluster zone
   DEPLOYMENT_NAME: go-hello-world # TODO: update deployment name if changed in deployment.yaml
@@ -41,7 +44,7 @@ jobs:
 
     - name: Docker configuration
       run: |-
-        gcloud --quiet auth configure-docker gcr.io
+        gcloud --quiet auth configure-docker asia-east1-docker.pkg.dev
     # Alternative option - authentication via credentials json
     - name: Set up slsa-default-generator
       id: set-slsa-generator
@@ -56,14 +59,21 @@ jobs:
         cat slsa3.intoto.jsonl
     - name: Dump GitHub context
       id: github_context_step
-      run: echo '${{ toJSON(github) }}'      
+      run: echo '${{ toJSON(github) }}'
+    - name: Install Cosign
+      uses: sigstore/cosign-installer@main
+    - name: Check install!
+      run: cosign version
     - name: Build and Push image
       id: image
       run: |
         gcloud builds submit --pack=image=asia-east1-docker.pkg.dev/$PROJECT_ID/image-repos/$IMAGE_NAME:$GITHUB_SHA
         image_name="asia-east1-docker.pkg.dev/$PROJECT_ID/image-repos/$IMAGE_NAME:$GITHUB_SHA"
         echo "::set-output name=image::$image_name"
-        gcloud artifacts docker images describe ${image_name} --show-provenance
+        gcloud artifacts docker images describe ${image_name} --show-provenance --format json > ./provenance.json
+        cat ./provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq .predicate > ./predicate.json
+        cosign attest --key ${COSIGN_KEY} --predicate ./predicate.json image=asia-east1-docker.pkg.dev/$PROJECT_ID/image-repos/$IMAGE_NAME:$GITHUB_SHA
+
     # - name: Build
     #   id: build
     #   run: |-
