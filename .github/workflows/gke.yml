@@ -67,12 +67,13 @@ jobs:
     - name: Build and Push image
       id: image
       run: |
-        gcloud builds submit --pack=image=asia-east1-docker.pkg.dev/$PROJECT_ID/image-repos/$IMAGE_NAME:$GITHUB_SHA
         image_name="asia-east1-docker.pkg.dev/$PROJECT_ID/image-repos/$IMAGE_NAME:$GITHUB_SHA"
-        echo "::set-output name=image::$image_name"
+        gcloud builds submit --pack=image=${image_name}
+        echo "::set-output name=image::${image_name}"
+
         gcloud artifacts docker images describe ${image_name} --show-provenance --format json > ./provenance.json
         cat ./provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq .predicate > ./predicate.json
-        cosign attest --key ${COSIGN_KEY} --predicate ./predicate.json image=asia-east1-docker.pkg.dev/$PROJECT_ID/image-repos/$IMAGE_NAME:$GITHUB_SHA
+        cosign attest --key ${COSIGN_KEY} --predicate ./predicate.json image=${image_name}
 
     # - name: Build
     #   id: build
