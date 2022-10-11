@@ -9,9 +9,9 @@ build:
   - context: .
     image: asia-east1-docker.pkg.dev/shawn-demo-2022/image-repos/hello-k8s-summit
 deploy:
-  kubectl:
-    manifests:
-    - kubernetes-manifests/**
+  kustomize:
+    paths:
+    - kubernetes-manifests/dev
 profiles:
 - name: cloudbuild
   build:
