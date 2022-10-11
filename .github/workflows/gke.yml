@@ -67,25 +67,25 @@ jobs:
       uses: sigstore/cosign-installer@main
     - name: Check install!
       run: cosign version
-    # - name: Run Skaffold pipeline as command
-    #   uses: hiberbee/github-action-skaffold@latest
-    #   id: build
-    #   with:
-    #     command: build
-    #     working-directory: test
-    #     skip-tests: true
-    #     repository: asia-east1-docker.pkg.dev
-    #     profile: cloudbuild 
+    - name: Run Skaffold pipeline as command
+      uses: hiberbee/github-action-skaffold@latest
+      id: build
+      with:
+        command: build
+        working-directory: test
+        file-output: ${{ github.workspace }}/artifact.json
+        skip-tests: true
+        profile: cloudbuild 
     - name: Build and Push image
       id: image
       run: |
-        image_name="asia-east1-docker.pkg.dev/$PROJECT_ID/image-repos/$IMAGE_NAME:$GITHUB_SHA"
+        image_name=$(cat ${{ github.workspace }}/artifact.json | jq '.builds[0].tag')
         echo "::set-output name=image::${image_name}"
-        gcloud builds submit --pack=image=${image_name}
+        #gcloud builds submit --pack=image=${image_name}
         gcloud artifacts docker images describe ${image_name} --show-provenance --format json >> ${{ github.workspace }}/provenance.json
         cat ${{ github.workspace }}/provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq -r .predicate >> ${{ github.workspace }}/predicate.json
         echo ${COSIGN_KEY} > ${{ github.workspace }}/cosign.key
-        cosign attest --key ${{ github.workspace }}/cosign.key --predicate ${{ github.workspace }}/predicate.json image=${image_name}
+        cosign attest --key ${{ github.workspace }}/cosign.key --predicate ${{ github.workspace }}/predicate.json ${image_name}
   # provenance:
   #   needs: [build]
   #   # TODO(https://github.com/slsa-framework/slsa-github-generator/issues/492): Use a tagged release once we have one.
