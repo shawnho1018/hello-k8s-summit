@@ -36,7 +36,10 @@ jobs:
       uses: 'google-github-actions/auth@v0'
       with:
         credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
-
+    - id: 'jq'
+      uses: sergeysova/jq-action@v2
+      with:
+        cmd: jq -n env
     # Setup gcloud CLI
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v0
