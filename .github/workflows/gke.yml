@@ -75,8 +75,8 @@ jobs:
       id: image
       needs: [build]
       run: |
-        image_name="${{needs.build.builds.imageName}}:${{needs.build.builds.tag}}"
-        echo ${image_name}
+        image_name=${{ needs.build.builds.imageName }}:${{ needs.build.builds.tag }}
+        echo "${image_name}"
         gcloud artifacts docker images describe ${image_name} --show-provenance --format json >> ${{ github.workspace }}/provenance.json
         cat ${{ github.workspace }}/provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq -r .predicate >> ${{ github.workspace }}/predicate.json
         echo ${COSIGN_KEY} > ${{ github.workspace }}/cosign.key
