@@ -24,9 +24,6 @@ jobs:
       packages: write
       id-token: write # Needed to create an OIDC token for keyless signing.
       actions: read # Needed to read workflow info.      
-    outputs:
-      image: ${{ steps.image.outputs.image }}
-      digest: ${{ steps.build.outputs.digest }}
 
     steps:
     - name: Checkout
@@ -44,7 +41,6 @@ jobs:
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v0
     # Build the Docker image
-
     - name: Docker configuration
       run: |-
         gcloud --quiet auth configure-docker asia-east1-docker.pkg.dev
@@ -67,7 +63,7 @@ jobs:
       uses: sigstore/cosign-installer@main
     - name: Check install!
       run: cosign version
-    - name: Run Skaffold pipeline as command
+    - name: Build and Push image with Skaffold
       uses: hiberbee/github-action-skaffold@latest
       id: build
       with:
@@ -75,13 +71,12 @@ jobs:
         file-output: ${{ github.workspace }}/artifact.json
         skip-tests: true
         profile: cloudbuild 
-    - name: Build and Push image
+    - name: Sign Image
       id: image
+      needs: [build]
       run: |
-        cat ${{ github.workspace }}/artifact.json
-        image_name=$(cat ${{ github.workspace }}/artifact.json | jq -r '.builds[0].tag')
-        echo "::set-output name=image::${image_name}"
-        #gcloud builds submit --pack=image=${image_name}
+        image_name="${{needs.build.builds.imageName}}:${{needs.build.builds.tag}}"
+        echo ${image_name}
         gcloud artifacts docker images describe ${image_name} --show-provenance --format json >> ${{ github.workspace }}/provenance.json
         cat ${{ github.workspace }}/provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq -r .predicate >> ${{ github.workspace }}/predicate.json
         echo ${COSIGN_KEY} > ${{ github.workspace }}/cosign.key
@@ -104,7 +99,6 @@ jobs:
     needs: [build]
     name: Setup and Deploy
     runs-on: self-hosted
-
     # Add "id-token" with the intended permissions.
     permissions:
       contents: 'read'
