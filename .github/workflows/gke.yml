@@ -75,7 +75,7 @@ jobs:
     - name: Sign Image
       id: sign
       run: |
-        image_name=${{ steps.build.outputs.output }}
+        image_name="${{ steps.build.builds.imageName }}:{{ steps.build.builds.tag}}"
         echo "${image_name}"
         gcloud artifacts docker images describe ${image_name} --show-provenance --format json >> ${{ github.workspace }}/provenance.json
         cat ${{ github.workspace }}/provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq -r .predicate >> ${{ github.workspace }}/predicate.json
@@ -128,7 +128,7 @@ jobs:
         gcloud container clusters get-credentials "$GKE_CLUSTER" --zone "$GKE_ZONE"
         gcloud auth configure-docker asia-east1-docker.pkg.dev
     # Deploy sample image to the GKE cluster with Skaffold
-    - name: Build and Push image with Skaffold
+    - name: Deploy Image with Skaffold
       uses: hiberbee/github-action-skaffold@latest
       id: run
       with:
