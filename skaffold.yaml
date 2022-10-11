@@ -7,7 +7,7 @@ build:
     sha256: {}
   artifacts:
   - context: .
-    image: go-hello-world
+    image: asia-east1-docker.pkg.dev/shawn-demo-2022/image-repos/go-hello-world
 deploy:
   kubectl:
     manifests:

@@ -64,16 +64,24 @@ jobs:
       uses: sigstore/cosign-installer@main
     - name: Check install!
       run: cosign version
+    # - name: Run Skaffold pipeline as command
+    #   uses: hiberbee/github-action-skaffold@latest
+    #   id: build
+    #   with:
+    #     command: build
+    #     working-directory: test
+    #     skip-tests: true
+    #     repository: asia-east1-docker.pkg.dev
+    #     profile: cloudbuild 
     - name: Build and Push image
       id: image
       run: |
         image_name="asia-east1-docker.pkg.dev/$PROJECT_ID/image-repos/$IMAGE_NAME:$GITHUB_SHA"
-        gcloud builds submit --pack=image=${image_name}
         echo "::set-output name=image::${image_name}"
-
-        gcloud artifacts docker images describe ${image_name} --show-provenance --format json > ./provenance.json
-        cat ./provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq .predicate > ./predicate.json
-        cosign attest --key ${COSIGN_KEY} --predicate ./predicate.json image=${image_name}
+        gcloud builds submit --pack=image=${image_name}
+        gcloud artifacts docker images describe ${image_name} --show-provenance --format json > cicd/provenance.json
+        cat cicd/provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq .predicate > cicd/predicate.json
+        cosign attest --key ${COSIGN_KEY} --predicate cicd/predicate.json image=${image_name}
 
     # - name: Build
     #   id: build
