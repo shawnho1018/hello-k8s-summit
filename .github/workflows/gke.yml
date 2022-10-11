@@ -78,7 +78,7 @@ jobs:
     - name: Build and Push image
       id: image
       run: |
-        image_name=$(cat ${{ github.workspace }}/artifact.json | jq '.builds[0].tag')
+        image_name=$(cat ${{ github.workspace }}/artifact.json | jq -r '.builds[0].tag')
         echo "::set-output name=image::${image_name}"
         #gcloud builds submit --pack=image=${image_name}
         gcloud artifacts docker images describe ${image_name} --show-provenance --format json >> ${{ github.workspace }}/provenance.json
