@@ -24,19 +24,14 @@ jobs:
       packages: write
       id-token: write # Needed to create an OIDC token for keyless signing.
       actions: read # Needed to read workflow info.      
-
     steps:
     - name: Checkout
       uses: actions/checkout@v3
-
     - id: 'auth'
       uses: 'google-github-actions/auth@v0'
       with:
         credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
-    - id: 'jq'
-      uses: sergeysova/jq-action@v2
-      with:
-        cmd: jq -n env
+
     # Setup gcloud CLI
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v0
@@ -59,10 +54,6 @@ jobs:
     - name: Dump GitHub context
       id: github_context_step
       run: echo '${{ toJSON(github) }}'
-    - name: Install Cosign
-      uses: sigstore/cosign-installer@main
-    - name: Check install!
-      run: cosign version
     - name: Build and Push image with Skaffold
       uses: hiberbee/github-action-skaffold@latest
       id: build
@@ -70,10 +61,28 @@ jobs:
         command: build
         file-output: ${{ github.workspace }}/artifact.json
         skip-tests: true
-        profile: cloudbuild 
+        profile: cloudbuild
+  verify-and-sign:
+    needs: [build]
+    name: Image Verification and Sign
+    runs-on: self-hosted
+    # Add "id-token" with the intended permissions.
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v0    
+    - name: Install Cosign
+      uses: sigstore/cosign-installer@main
+    - name: Check install!
+      run: cosign version
+    - id: 'jq'
+      uses: sergeysova/jq-action@v2
+      with:
+        cmd: jq -n env
     - name: Sign Image
-      id: image
-      needs: [build]
+      id: sign
       run: |
         image_name=${{ needs.build.builds.imageName }}:${{ needs.build.builds.tag }}
         echo "${image_name}"
@@ -103,10 +112,9 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
-
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+    # - name: Checkout
+    #   uses: actions/checkout@v3
 
     # Configure Workload Identity Federation and generate an access token.
     # - id: 'auth'
