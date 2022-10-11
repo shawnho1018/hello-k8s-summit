@@ -81,8 +81,12 @@ jobs:
       run: |
         image_name="asia-east1-docker.pkg.dev/$PROJECT_ID/image-repos/$IMAGE_NAME:$GITHUB_SHA"
         echo "::set-output name=image::${image_name}"
+        echo "${image_name}" >> ${{ github.workspace }}/test.txt
+        cat ${{ github.workspace }}/test.txt
         gcloud builds submit --pack=image=${image_name}
-        gcloud artifacts docker images describe ${image_name} --show-provenance --format json
+        gcloud artifacts docker images describe ${image_name} --show-provenance --format json >> ${{ github.workspace }}/provenance.json
+        cat ${{ github.workspace }}/provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq .predicate > ${{ github.workspace }}/predicate.json
+        cosign attest --key ${COSIGN_KEY} --predicate ${{ github.workspace }}/predicate.json image=${image_name}
 
     # - name: Build
     #   id: build
