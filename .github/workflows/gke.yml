@@ -72,7 +72,6 @@ jobs:
       id: build
       with:
         command: build
-        working-directory: test
         file-output: ${{ github.workspace }}/artifact.json
         skip-tests: true
         profile: cloudbuild 
