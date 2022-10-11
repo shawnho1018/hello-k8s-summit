@@ -79,9 +79,9 @@ jobs:
         image_name="asia-east1-docker.pkg.dev/$PROJECT_ID/image-repos/$IMAGE_NAME:$GITHUB_SHA"
         echo "::set-output name=image::${image_name}"
         gcloud builds submit --pack=image=${image_name}
-        gcloud artifacts docker images describe ${image_name} --show-provenance --format json > cicd/provenance.json
-        cat cicd/provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq .predicate > cicd/predicate.json
-        cosign attest --key ${COSIGN_KEY} --predicate cicd/predicate.json image=${image_name}
+        gcloud artifacts docker images describe ${image_name} --show-provenance --format json > ${{ github.workspace }}/cicd/provenance.json
+        cat ${{ github.workspace }}/cicd/provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq .predicate > ${{ github.workspace }}/cicd/predicate.json
+        cosign attest --key ${COSIGN_KEY} --predicate ${{ github.workspace }}/cicd/predicate.json image=${image_name}
 
     # - name: Build
     #   id: build
@@ -161,6 +161,7 @@ jobs:
         chmod u+x ./kubectl
         curl -sfLo kustomize https://github.com/kubernetes-sigs/kustomize/releases/download/v3.1.0/kustomize_3.1.0_linux_amd64
         chmod u+x ./kustomize
+        echo "$(pwd)" >> $GITHUB_PATH
 
     - name: Deploy
       run: |-
