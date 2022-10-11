@@ -25,8 +25,7 @@ jobs:
       id-token: write # Needed to create an OIDC token for keyless signing.
       actions: read # Needed to read workflow info.      
     outputs:
-      imageName: ${{ steps.build.builds[0].imageName }}
-      tag: ${{ steps.build.builds[0].tag}}
+      tag: ${{ steps.build.outputs.output }}
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -75,7 +74,7 @@ jobs:
     - name: Sign Image
       id: sign
       run: |
-        image_name="${{ steps.build.builds[0].imageName }}:{{ steps.build.builds[0].tag}}"
+        image_name="${{ steps.build.outputs.output }}"
         echo "${image_name}"
         gcloud artifacts docker images describe ${image_name} --show-provenance --format json >> ${{ github.workspace }}/provenance.json
         cat ${{ github.workspace }}/provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq -r .predicate >> ${{ github.workspace }}/predicate.json
