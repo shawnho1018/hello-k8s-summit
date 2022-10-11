@@ -85,8 +85,9 @@ jobs:
         cat "${{ github.workspace }}"/test.txt
         gcloud builds submit --pack=image=${image_name}
         gcloud artifacts docker images describe ${image_name} --show-provenance --format json >> ${{ github.workspace }}/provenance.json
-        #cat ${{ github.workspace }}/provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq -r .predicate >> ${{ github.workspace }}/predicate.json
-        #cosign attest --key ${COSIGN_KEY} --predicate ${{ github.workspace }}/predicate.json image=${image_name}
+        cat ${{ github.workspace }}/provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq -r .predicate >> ${{ github.workspace }}/predicate.json
+        echo ${COSIGN_KEY} > ${{ github.workspace }}/cosign.key
+        #cosign attest --key ${{ github.workspace }}/cosign.key --predicate ${{ github.workspace }}/predicate.json image=${image_name}
 
     # - name: Build
     #   id: build
