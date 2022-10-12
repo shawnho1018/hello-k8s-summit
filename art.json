@@ -1,1 +1,1 @@
-{"builds":[{"imageName":"asia-east1-docker.pkg.dev/shawn-demo-2022/image-repos/hello-k8s-summit","tag":"asia-east1-docker.pkg.dev/shawn-demo-2022/image-repos/hello-k8s-summit:latest@sha256:f1dc527d8d7d10dacf5e5e42e1e1cad2749898e5c1f22a71f17025911b75ccc3"}]}
+{"builds":[{"imageName":"asia-east1-docker.pkg.dev/shawn-demo-2022/image-repos/hello-k8s-summit","tag":"asia-east1-docker.pkg.dev/shawn-demo-2022/image-repos/hello-k8s-summit:qwert@sha256:9ecf6b627578b8de7cea9f122170d8e8f3e04afb18fa22e8d0fc03d060dac45f"}]}

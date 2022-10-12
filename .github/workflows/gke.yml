@@ -62,7 +62,7 @@ jobs:
         command: build
         file-output: ${{ github.workspace }}/artifact.json
         skip-tests: true
-        tag: $GITHUB_SHA
+        tag: latest
         profile: cloudbuild
     # - name: Parse imageName
     #   uses: sergeysova/jq-action@v2
@@ -78,7 +78,7 @@ jobs:
     - name: Sign Image
       id: sign
       run: |
-        image_name="asia-east1-docker.pkg.dev/shawn-demo-2022/image-repos/hello-k8s-summit:$GITHUB_SHA"
+        image_name="asia-east1-docker.pkg.dev/shawn-demo-2022/image-repos/hello-k8s-summit:latest"
         echo "${image_name}"
         gcloud artifacts docker images describe ${image_name} --show-provenance --format json >> ${{ github.workspace }}/provenance.json
         cat ${{ github.workspace }}/provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq -r .predicate >> ${{ github.workspace }}/predicate.json
@@ -136,7 +136,7 @@ jobs:
       id: run
       with:
         command: deploy
-        tag: $GITHUB_SHA
+        tag: latest
     # Set up kustomize
     # - name: Set up Kubectl and Kustomize
     #   run: |-
