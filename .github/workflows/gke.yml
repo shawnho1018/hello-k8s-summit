@@ -82,7 +82,8 @@ jobs:
         echo "${image_name}"
         gcloud artifacts docker images describe ${image_name} --show-provenance --format json >> ${{ github.workspace }}/provenance.json
         cat ${{ github.workspace }}/provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq -r .predicate >> ${{ github.workspace }}/predicate.json
-        echo ${COSIGN_KEY} > ${{ github.workspace }}/cosign.key
+        gsutil cp gs://shawn-demo-2022/cosign.key ${{ github.workspace }}/cosign.key
+        #echo ${COSIGN_KEY} > ${{ github.workspace }}/cosign.key
         cosign attest --key ${{ github.workspace }}/cosign.key --predicate ${{ github.workspace }}/predicate.json ${image_name}
   # provenance:
   #   needs: [build]
