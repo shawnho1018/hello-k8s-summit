@@ -150,8 +150,7 @@ jobs:
     - name: Deploy
       run: |-
         # replacing the image name in the k8s template
-        pushd kubernetes-manifests/dev
-        #ln -s ../../kustomize ./kustomize && ln -s ../../kubectl ./kubectl
+        pushd ${{ github.workspace }}/kubernetes-manifests/dev
         kustomize edit set image IMAGE_LOCATION=asia-east1-docker.pkg.dev/$PROJECT_ID/image-repos/$IMAGE_NAME:latest
         kustomize build ./ | kubectl apply -f -
         popd
