@@ -24,8 +24,8 @@ jobs:
       packages: write
       id-token: write # Needed to create an OIDC token for keyless signing.
       actions: read # Needed to read workflow info.      
-    outputs:
-      tag: ${{ steps.tag.outputs.value }}
+    # outputs:
+    #   tag: ${{ steps.tag.outputs.value }}
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -62,12 +62,13 @@ jobs:
         command: build
         file-output: ${{ github.workspace }}/artifact.json
         skip-tests: true
-        profile: cloudbuild  
-    - name: Parse imageName
-      uses: sergeysova/jq-action@v2
-      id: tag
-      with:
-        cmd: 'jq .builds[0].tag /github/workspace/artifact.json -r'
+        tag: ${{ GITHUB_SHA }}
+        profile: cloudbuild
+    # - name: Parse imageName
+    #   uses: sergeysova/jq-action@v2
+    #   id: tag
+    #   with:
+    #     cmd: 'jq .builds[0].tag /github/workspace/artifact.json -r'
     - name: Show my version
       run: 'echo "version ${{ steps.tag.outputs.value }}"'
     - name: Install Cosign
@@ -134,7 +135,7 @@ jobs:
       id: run
       with:
         command: deploy
-        tag: ${{ needs.build.outputs.tag }}
+        tag: ${{ GITHUB_SHA }}
     # Set up kustomize
     # - name: Set up Kubectl and Kustomize
     #   run: |-
