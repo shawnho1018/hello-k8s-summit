@@ -1,0 +1,71 @@
+{
+  "builder": {
+    "id": "https://cloudbuild.googleapis.com/GoogleHostedWorker@v0.3"
+  },
+  "materials": [
+    {
+      "digest": {
+        "md5": "2ff7d318917db4c72d8471e6e24b64c1"
+      },
+      "uri": "gs://shawn-demo-2022_cloudbuild/source/1664727377.300972-8bcd6b064c7b47bd920d9bd9ddaf11c5.tgz#1664727392754501"
+    }
+  ],
+  "metadata": {
+    "buildFinishedOn": "2022-10-02T16:18:06.525866Z",
+    "buildInvocationId": "aa86ad2d-9e45-4ffd-8d40-b456ac412f8e",
+    "buildStartedOn": "2022-10-02T16:16:33.918743223Z"
+  },
+  "recipe": {
+    "arguments": {
+      "@type": "type.googleapis.com/google.devtools.cloudbuild.v1.Build",
+      "id": "aa86ad2d-9e45-4ffd-8d40-b456ac412f8e",
+      "name": "projects/715534540884/locations/global/builds/aa86ad2d-9e45-4ffd-8d40-b456ac412f8e",
+      "options": {
+        "logging": "LEGACY",
+        "pool": {}
+      },
+      "sourceProvenance": {
+        "fileHashes": {
+          "gs://shawn-demo-2022_cloudbuild/source/1664727377.300972-8bcd6b064c7b47bd920d9bd9ddaf11c5.tgz#1664727392754501": {
+            "fileHash": [
+              {
+                "type": "MD5",
+                "value": "L/fTGJF9tMcthHHm4ktkwQ=="
+              }
+            ]
+          }
+        },
+        "resolvedStorageSource": {
+          "bucket": "shawn-demo-2022_cloudbuild",
+          "generation": "1664727392754501",
+          "object": "source/1664727377.300972-8bcd6b064c7b47bd920d9bd9ddaf11c5.tgz"
+        }
+      },
+      "steps": [
+        {
+          "args": [
+            "build",
+            "asia-east1-docker.pkg.dev/shawn-demo-2022/slsa-demo/hello-k8s-summit:c26d01d436ed94b093332e6e15241027646e5405",
+            "--network",
+            "cloudbuild",
+            "--builder",
+            "gcr.io/buildpacks/builder"
+          ],
+          "entrypoint": "pack",
+          "name": "gcr.io/k8s-skaffold/pack",
+          "pullTiming": {
+            "endTime": "2022-10-02T16:16:43.209487389Z",
+            "startTime": "2022-10-02T16:16:42.039854576Z"
+          },
+          "status": "SUCCESS",
+          "timing": {
+            "endTime": "2022-10-02T16:17:29.955653191Z",
+            "startTime": "2022-10-02T16:16:42.039854576Z"
+          }
+        }
+      ]
+    },
+    "definedInMaterial": "-1",
+    "type": "https://cloudbuild.googleapis.com/CloudBuildSteps@v0.1"
+  }
+}
