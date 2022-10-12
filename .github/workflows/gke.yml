@@ -78,7 +78,7 @@ jobs:
     - name: Sign Image
       id: sign
       run: |
-        image_name=${{ steps.tag.outputs.value }}
+        image_name="asia-east1-docker.pkg.dev/shawn-demo-2022/image-repos/hello-k8s-summit:$GITHUB_SHA"
         gcloud artifacts docker images describe ${image_name} --show-provenance --format json >> ${{ github.workspace }}/provenance.json
         cat ${{ github.workspace }}/provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq -r .predicate >> ${{ github.workspace }}/predicate.json
         echo ${COSIGN_KEY} > ${{ github.workspace }}/cosign.key
