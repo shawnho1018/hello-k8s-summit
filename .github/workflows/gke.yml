@@ -62,7 +62,7 @@ jobs:
         command: build
         file-output: ${{ github.workspace }}/artifact.json
         skip-tests: true
-        tag: ${{ GITHUB_SHA }}
+        tag: $GITHUB_SHA
         profile: cloudbuild
     # - name: Parse imageName
     #   uses: sergeysova/jq-action@v2
@@ -135,7 +135,7 @@ jobs:
       id: run
       with:
         command: deploy
-        tag: ${{ GITHUB_SHA }}
+        tag: $GITHUB_SHA
     # Set up kustomize
     # - name: Set up Kubectl and Kustomize
     #   run: |-
