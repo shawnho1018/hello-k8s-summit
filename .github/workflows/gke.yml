@@ -25,7 +25,7 @@ jobs:
       id-token: write # Needed to create an OIDC token for keyless signing.
       actions: read # Needed to read workflow info.      
     outputs:
-      tag: ${{ steps.build.outputs.image_name }}
+      tag: ${{ steps.tag.outputs.value }}
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -67,17 +67,17 @@ jobs:
       uses: sigstore/cosign-installer@main
     - name: Check install!
       run: cosign version
-    - id: 'jq'
+    - name: Parse imageName
       uses: sergeysova/jq-action@v2
+      id: tag
       with:
-        cmd: jq -n env
+        cmd: 'jq .builds[0].tag ${{ github.workspace }}/artifact.json -r'
+    - name: Show my version
+      run: 'echo "version ${{ steps.tag.outputs.value }}"'
     - name: Sign Image
       id: sign
       run: |
-        echo "VALIDATE ARTIFACT"
-        cat ${{ github.workspace }}/artifact.json
-        image_name=$(cat ${{ github.workspace }}/artifact.json | jq -r '.builds[0].tag')
-        echo "::set-output name=image_name::${image_name}"
+        image_name=${{ steps.tag.outputs.value }}
         gcloud artifacts docker images describe ${image_name} --show-provenance --format json >> ${{ github.workspace }}/provenance.json
         cat ${{ github.workspace }}/provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq -r .predicate >> ${{ github.workspace }}/predicate.json
         echo ${COSIGN_KEY} > ${{ github.workspace }}/cosign.key
