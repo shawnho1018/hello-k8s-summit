@@ -7,12 +7,11 @@ on:
 
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
-  COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
-  COSIGN_PUB: ${{ secrets.COSIGN_PUB }}
-  COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
   GKE_CLUSTER: k8s-summit    # TODO: update to cluster name
   GKE_ZONE: asia-east1-a	   # TODO: update to cluster zone
   DEPLOYMENT_NAME: go-hello-world # TODO: update deployment name if changed in deployment.yaml
+  REPO_NAME: "asia-east1-docker.pkg.dev"
+  REPO_FOLDER: "image-repos"
   IMAGE_NAME: hello-k8s-summit
 jobs:
   build:
@@ -23,8 +22,6 @@ jobs:
       packages: write
       id-token: write # Needed to create an OIDC token for keyless signing.
       actions: read # Needed to read workflow info.      
-    # outputs:
-    #   tag: ${{ steps.tag.outputs.value }}
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -35,11 +32,11 @@ jobs:
     # Setup gcloud CLI
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v0
-    # Build the Docker image
+    # Using gcloud CLI to assist docker authentication
     - name: Docker configuration
       run: |-
-        gcloud --quiet auth configure-docker asia-east1-docker.pkg.dev
-    # Alternative option - authentication via credentials json
+        gcloud --quiet auth configure-docker ${REPO_NAME}
+    # Demo Purpose for slsa-signature generator with golang artifact
     - name: Set up slsa-default-generator
       id: set-slsa-generator
       shell: bash
@@ -48,26 +45,17 @@ jobs:
       run: |-
         curl -sfLo slsa-github-generator https://github.com/slsa-framework/slsa-github-generator/releases/download/v1.2.0/slsa-generator-generic-linux-amd64
         chmod u+x ./slsa-github-generator
-        echo "foo" > artifact1
         ./slsa-github-generator attest -g "slsa3.intoto.jsonl" --subjects $(sha256sum artifact1 | base64 -w0)
         cat slsa3.intoto.jsonl
     - name: Dump GitHub context
       id: github_context_step
       run: echo '${{ toJSON(github) }}'
-    - name: Build and Push image with Skaffold
-      uses: hiberbee/github-action-skaffold@latest
-      id: build
-      with:
-        command: build
-        file-output: ${{ github.workspace }}/artifact.json
-        skip-tests: true
-        tag: latest
-        profile: cloudbuild
-    # - name: Parse imageName
-    #   uses: sergeysova/jq-action@v2
-    #   id: tag
-    #   with:
-    #     cmd: 'jq .builds[0].tag /github/workspace/artifact.json -r'
+    # Build and push image to Google Container Registry
+    - name: Build
+      run: |-
+        gcloud builds submit \
+          --quiet \
+          --tag "$REPO_NAME/$PROJECT_ID/$REPO_FOLDER/$IMAGE_NAME:$GITHUB_SHA"
     - name: Show my version
       run: 'echo "version ${{ steps.tag.outputs.value }}"'
     - name: Install Cosign
@@ -77,26 +65,12 @@ jobs:
     - name: Sign Image
       id: sign
       run: |
-        image_name="asia-east1-docker.pkg.dev/shawn-demo-2022/image-repos/hello-k8s-summit:latest"
+        image_name="$REPO_NAME/$PROJECT_ID/$REPO_FOLDER/$IMAGE_NAME/$IMAGE_NAME:$GITHUB_SHA"
         echo "${image_name}"
         gcloud artifacts docker images describe ${image_name} --show-provenance --format json >> ${{ github.workspace }}/provenance.json
         cat ${{ github.workspace }}/provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq -r .predicate >> ${{ github.workspace }}/predicate.json
-        gsutil cp gs://shawn-demo-2022/cosign.key ${{ github.workspace }}/cosign.key
-        #echo ${COSIGN_KEY} > ${{ github.workspace }}/cosign.key
+        gsutil cp gs://${PROJECT_ID}/cosign.key ${{ github.workspace }}/cosign.key
         cosign attest --key ${{ github.workspace }}/cosign.key --predicate ${{ github.workspace }}/predicate.json ${image_name}
-  # provenance:
-  #   needs: [build]
-  #   # TODO(https://github.com/slsa-framework/slsa-github-generator/issues/492): Use a tagged release once we have one.
-  #   #uses: shawnho1018/hello-k8s-summit/.github/workflows/generator_container_slsa3.yml@master
-  #   uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@main
-  #   with:
-  #     image: ${{ needs.build.outputs.tag }}
-  #     digest: ${{ needs.build.outputs.digest }}
-  #     registry-username: _json_key
-  #     # TODO(https://github.com/slsa-framework/slsa-github-generator/issues/492): Remove after GA release.
-  #     compile-generator: true
-  #   secrets:
-  #     registry-password: ${{ secrets.GCP_CREDENTIALS }}
 
   setup-and-deploy:
     needs: [build]
@@ -107,13 +81,6 @@ jobs:
       contents: 'read'
       id-token: 'write'
     steps:
-    # Configure Workload Identity Federation and generate an access token.
-    # - id: 'auth'
-    #   name: 'Authenticate to Google Cloud'
-    #   uses: 'google-github-actions/auth@v0'
-    #   with:
-    #     workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
-    #     service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
     - name: Checkout
       uses: actions/checkout@v3
     # Alternative option - authentication via credentials json
@@ -130,15 +97,7 @@ jobs:
     - name: Set up GKE credentials
       run: |-
         gcloud container clusters get-credentials "$GKE_CLUSTER" --zone "$GKE_ZONE"
-        gcloud auth configure-docker asia-east1-docker.pkg.dev
-    # Deploy sample image to the GKE cluster with Skaffold
-    # - name: Deploy Image with Skaffold
-    #   uses: hiberbee/github-action-skaffold@latest
-    #   id: run
-    #   with:
-    #     command: deploy
-    #     tag: latest
-    # Set up kustomize
+        gcloud auth configure-docker ${REPO_NAME}
     - name: Set up Kubectl and Kustomize
       run: |-
         curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -151,6 +110,6 @@ jobs:
       run: |-
         # replacing the image name in the k8s template
         pushd ${{ github.workspace }}/kubernetes-manifests/dev
-        kustomize edit set image IMAGE_LOCATION=asia-east1-docker.pkg.dev/$PROJECT_ID/image-repos/$IMAGE_NAME:latest
+        kustomize edit set image IMAGE_LOCATION=$REPO_NAME/$PROJECT_ID/$REPO_FOLDER/$IMAGE_NAME:$GITHUB_SHA
         kustomize build ./ | kubectl apply -f -
         popd
