@@ -12,7 +12,7 @@ env:
   DEPLOYMENT_NAME: go-hello-world # TODO: update deployment name if changed in deployment.yaml
   REPO_NAME: "asia-east1-docker.pkg.dev"
   REPO_FOLDER: "image-repos"
-  COSIGN_PASSWORD: "hello-k8s-summit"
+  COSIGN_PASSWORD: "demo-k8s-summit"
   IMAGE_NAME: hello-k8s-summit
 jobs:
   build:
