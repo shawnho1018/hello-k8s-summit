@@ -56,7 +56,7 @@ jobs:
       run: |-
         gcloud builds submit \
           --quiet \
-          --tag "$REPO_NAME/$PROJECT_ID/$REPO_FOLDER/$IMAGE_NAME:$GITHUB_SHA"
+          --tag "$REPO_NAME/$PROJECT_ID/$REPO_FOLDER/$IMAGE_NAME:latest"
     - name: Show my version
       run: 'echo "version ${{ steps.tag.outputs.value }}"'
     - name: Install Cosign
@@ -66,12 +66,11 @@ jobs:
     - name: Sign Image
       id: sign
       run: |
-        image_name="$REPO_NAME/$PROJECT_ID/$REPO_FOLDER/$IMAGE_NAME:$GITHUB_SHA"
+        image_name="$REPO_NAME/$PROJECT_ID/$REPO_FOLDER/$IMAGE_NAME:latest"
         echo "${image_name}"
         gcloud artifacts docker images describe ${image_name} --show-provenance --format json >> ${{ github.workspace }}/provenance.json
         cat ${{ github.workspace }}/provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq -r .predicate >> ${{ github.workspace }}/predicate.json
         gsutil cp gs://${PROJECT_ID}/cosign.key ${{ github.workspace }}/cosign.key
-        cat ${{ github.workspace }}/cosign.key
         cosign attest --key ${{ github.workspace }}/cosign.key --predicate ${{ github.workspace }}/predicate.json ${image_name}
 
   setup-and-deploy:
@@ -112,6 +111,6 @@ jobs:
       run: |-
         # replacing the image name in the k8s template
         pushd ${{ github.workspace }}/kubernetes-manifests/dev
-        kustomize edit set image IMAGE_LOCATION=$REPO_NAME/$PROJECT_ID/$REPO_FOLDER/$IMAGE_NAME:$GITHUB_SHA
+        kustomize edit set image IMAGE_LOCATION=$REPO_NAME/$PROJECT_ID/$REPO_FOLDER/$IMAGE_NAME:latest
         kustomize build ./ | kubectl apply -f -
         popd
