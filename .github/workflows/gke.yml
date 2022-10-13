@@ -71,8 +71,8 @@ jobs:
         echo "${image_name}"
         gcloud artifacts docker images describe ${image_name} --show-provenance --format json >> ${{ github.workspace }}/provenance.json
         cat ${{ github.workspace }}/provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq -r .predicate >> ${{ github.workspace }}/predicate.json
-        gsutil cp gs://${PROJECT_ID}/cosign.key ${{ github.workspace }}/cosign.key
-        cosign attest --key ${{ github.workspace }}/cosign.key --predicate ${{ github.workspace }}/predicate.json ${image_name}
+        #gsutil cp gs://${PROJECT_ID}/cosign.key ${{ github.workspace }}/cosign.key
+        cosign attest --key gcpkms://projects/shawn-demo-2022/locations/asia-east1/keyRings/shawn-local-keyring/cryptoKeys/image-sign/cryptoKeyVersions/1 --predicate ${{ github.workspace }}/predicate.json ${image_name}
 
   setup-and-deploy:
     needs: [build]

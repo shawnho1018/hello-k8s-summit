@@ -8,11 +8,8 @@ spec:
   authorities:
   - name: custom-key
     key:
-      data: |
-        -----BEGIN PUBLIC KEY-----
-        MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEeDm/Gx1BcscmeEwHlX0J/u/tiCDP
-        YIepJFr71xZ0TGJgW/ESzp3wf97L0E9mnKLp5tpFJIhTEa+3fyaLrSm1Dw==
-        -----END PUBLIC KEY-----
+      kms:
+        gcpkms://projects/shawn-demo-2022/locations/asia-east1/keyRings/shawn-local-keyring/cryptoKeys/image-sign/cryptoKeyVersions/1
     attestations:
     - name: must-have-cosign-sigstore-sign
       predicateType: custom
