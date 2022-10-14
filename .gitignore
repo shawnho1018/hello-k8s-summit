@@ -9,6 +9,7 @@
 .readmes/
 .vscode/
 test-code/
+examples/test-demo
 # delve output
 debug
 slsa/
