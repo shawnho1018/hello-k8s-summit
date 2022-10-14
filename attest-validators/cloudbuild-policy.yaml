@@ -8,8 +8,8 @@ spec:
   authorities:
   - name: custom-key
     key:
-      kms:
-        gcpkms://projects/shawn-demo-2022/locations/asia-east1/keyRings/shawn-local-keyring/cryptoKeys/image-sign/cryptoKeyVersions/1
+      secretRef:
+        name: mysecret
     attestations:
     - name: must-have-cosign-sigstore-sign
       predicateType: custom
