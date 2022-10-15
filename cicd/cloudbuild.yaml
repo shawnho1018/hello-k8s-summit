@@ -12,7 +12,7 @@ steps:
   args:
   - '-c'
   - |
-    SRC_IMAGE=$(cat /workspace/image.json | jq -r '.builds[0].tag' | sed 's/\:latest//g')
+    SRC_IMAGE="$(cat /workspace/image.json | jq -r '.builds[0].tag' | sed 's/\:latest//g')"
     wget https://github.com/slsa-framework/slsa-verifier/releases/download/v1.4.1-rc/slsa-verifier-linux-amd64
     mv slsa-verifier-linux-amd64 slsa-verifier
 
