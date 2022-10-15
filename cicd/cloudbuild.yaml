@@ -12,18 +12,18 @@ steps:
   args:
   - '-c'
   - |
-    export IMAGE=$(cat /workspace/image.json | jq -r '.builds[0].tag' | sed 's/\:latest//g')
+    SRC_IMAGE=$(cat /workspace/image.json | jq -r '.builds[0].tag' | sed 's/\:latest//g')
     wget https://github.com/slsa-framework/slsa-verifier/releases/download/v1.4.1-rc/slsa-verifier-linux-amd64
     mv slsa-verifier-linux-amd64 slsa-verifier
 
-    gcloud artifacts docker images describe "${IMAGE}" --format json --show-provenance > /workspace/provenance.json
+    gcloud artifacts docker images describe "${SRC_IMAGE}" --format json --show-provenance > /workspace/provenance.json
     cat /workspace/provenance.json
-    ./slsa-verifier verify-image "${IMAGE}" \
+    ./slsa-verifier verify-image "${SRC_IMAGE}" \
       --provenance-path provenance.json \
       --source-uri https://github.com/shawnho1018/hello-k8s-summit \
       --builder-id=https://cloudbuild.googleapis.com/GoogleHostedWorker
     
-    gcloud artifacts docker images scan ${IMAGE}:latest \
+    gcloud artifacts docker images scan ${SRC_IMAGE}:latest \
       --format='value(response.scan)' --remote > /workspace/scan_id.txt
 
 - id: 'Check cve'
