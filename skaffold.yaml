@@ -11,7 +11,7 @@ build:
 deploy:
   kustomize:
     paths:
-    - kubernetes-manifests/dev-bd
+    - kubernetes-manifests/dev-cb
 profiles:
 - name: cloudbuild
   build:
@@ -19,4 +19,4 @@ profiles:
   deploy:
     kustomize:
       paths:
-      - kubernetes-manifests/dev-bd
+      - kubernetes-manifests/dev-cb

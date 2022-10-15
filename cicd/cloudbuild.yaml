@@ -16,10 +16,11 @@ steps:
     curl https://github.com/slsa-framework/slsa-verifier/releases/download/v1.4.1-rc/slsa-verifier-linux-amd64 --output ./slsa-verifier
     chmod +x ./slsa-verifier
     gcloud artifacts docker images describe ${_IMAGE_PATH}@${ImageDigest} --format json --show-provenance > /workspace/provenance.json
-    cat /workspace/provenance.json
+    source_url=$(cat /workspace/provenance.json | jq -r '.provenance_summary.provenance[0].build.intotoStatement.slsaProvenance.materials[0].uri')
+
     ./slsa-verifier verify-image ${_IMAGE_PATH}@${ImageDigest} \
       --provenance-path provenance.json \
-      --source-uri https://github.com/shawnho1018/hello-k8s-summit \
+      --source-uri ${source_url} \
       --builder-id=https://cloudbuild.googleapis.com/GoogleHostedWorker
     
     gcloud artifacts docker images scan ${_IMAGE_PATH}@${ImageDigest} \
@@ -53,6 +54,10 @@ steps:
   args:
   - '-c'
   - |
+    ImageDigest="$(gcloud container images list-tags --format='get(digest)' ${_IMAGE_PATH} | head -1)"
+    pushd kubernetes-manifests/dev-cb
+    kustomize edit set image IMAGE_LOCATION ${_IMAGE_PATH}@${ImageDigest}
+    popd
     skaffold deploy -p cloudbuild --build-artifacts=/workspace/image.json
 substitutions:
   _SEVERITY: CRITICAL
