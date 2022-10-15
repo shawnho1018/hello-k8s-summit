@@ -12,9 +12,10 @@ steps:
   args:
   - '-c'
   - |
+    export IMAGE=$(cat /workspace/image.json | jq -r '.builds[0].tag' | sed 's/\:latest//g')
     wget https://github.com/slsa-framework/slsa-verifier/releases/download/v1.4.1-rc/slsa-verifier-linux-amd64
     mv slsa-verifier-linux-amd64 slsa-verifier
-    IMAGE=$(cat /workspace/image.json | jq -r '.builds[0].tag' | sed 's/\:latest//g')
+
     gcloud artifacts docker images describe "${IMAGE}" --format json --show-provenance > /workspace/provenance.json
     cat /workspace/provenance.json
     ./slsa-verifier verify-image "${IMAGE}" \
