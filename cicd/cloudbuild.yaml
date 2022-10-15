@@ -7,7 +7,7 @@ steps:
   - |
     skaffold build -p cloudbuild --file-output /workspace/image.json
 - id: 'validate signature'
-  name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  name: 'gcr.io/shawn-demo-2022/cosign:latest'
   entrypoint: 'bash'
   args:
   - '-c'
