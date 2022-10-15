@@ -13,17 +13,19 @@ steps:
   - '-c'
   - |
     SRC_IMAGE="$(cat /workspace/image.json | jq -r '.builds[0].tag' | sed 's/\:latest//g')"
+    ImageDigest="$(gcloud container images list-tags --format='get(digest)' ${_IMAGE_PATH} | head -1)"
+    SRC_IMAGE="${_IMAGE_PATH}@${ImageDigest}"
     wget https://github.com/slsa-framework/slsa-verifier/releases/download/v1.4.1-rc/slsa-verifier-linux-amd64
     mv slsa-verifier-linux-amd64 slsa-verifier
 
-    gcloud artifacts docker images describe "${SRC_IMAGE}" --format json --show-provenance > /workspace/provenance.json
+    gcloud artifacts docker images describe ${SRC_IMAGE} --format json --show-provenance > /workspace/provenance.json
     cat /workspace/provenance.json
-    ./slsa-verifier verify-image "${SRC_IMAGE}" \
+    ./slsa-verifier verify-image ${SRC_IMAGE} \
       --provenance-path provenance.json \
       --source-uri https://github.com/shawnho1018/hello-k8s-summit \
       --builder-id=https://cloudbuild.googleapis.com/GoogleHostedWorker
     
-    gcloud artifacts docker images scan ${SRC_IMAGE}:latest \
+    gcloud artifacts docker images scan ${SRC_IMAGE} \
       --format='value(response.scan)' --remote > /workspace/scan_id.txt
 
 - id: 'Check cve'
@@ -58,4 +60,5 @@ steps:
 substitutions:
   _SEVERITY: CRITICAL
   _NEGLECT_CVE: CVE-2022-1292
+  _IMAGE_PATH: asia-east1-docker.pkg.dev/shawn-demo-2022/image-repos/hello-k8s-summit
 timeout: 1200s
