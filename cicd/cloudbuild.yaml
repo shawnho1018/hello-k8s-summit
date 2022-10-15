@@ -54,9 +54,11 @@ steps:
   args:
   - '-c'
   - |
+    gcloud container clusters get-credentials ${_CLUSTER_NAME}
     skaffold deploy -p cloudbuild --build-artifacts=/workspace/image.json
 substitutions:
   _SEVERITY: CRITICAL
   _NEGLECT_CVE: CVE-2022-1292
+  _CLUSTER_NAME: k8s-summit
   _IMAGE_PATH: asia-east1-docker.pkg.dev/shawn-demo-2022/image-repos/hello-k8s-summit
 timeout: 1200s
