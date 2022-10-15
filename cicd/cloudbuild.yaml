@@ -13,10 +13,9 @@ steps:
   - '-c'
   - |
     ImageDigest="$(gcloud container images list-tags --format='get(digest)' ${_IMAGE_PATH} | head -1)"
-    
-    wget https://github.com/slsa-framework/slsa-verifier/releases/download/v1.4.1-rc/slsa-verifier-linux-amd64
-    mv slsa-verifier-linux-amd64 slsa-verifier
-
+    apt install -y wget
+    curl https://github.com/slsa-framework/slsa-verifier/releases/download/v1.4.1-rc/slsa-verifier-linux-amd64 --output ./slsa-verifier
+    chmod +x ./slsa-verifier
     gcloud artifacts docker images describe ${_IMAGE_PATH}@${ImageDigest} --format json --show-provenance > /workspace/provenance.json
     cat /workspace/provenance.json
     ./slsa-verifier verify-image ${_IMAGE_PATH}@${ImageDigest} \
