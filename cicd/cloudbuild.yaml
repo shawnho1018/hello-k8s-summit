@@ -12,7 +12,6 @@ steps:
   args:
   - '-c'
   - |
-    SRC_IMAGE="$(cat /workspace/image.json | jq -r '.builds[0].tag' | sed 's/\:latest//g')"
     ImageDigest="$(gcloud container images list-tags --format='get(digest)' ${_IMAGE_PATH} | head -1)"
     SRC_IMAGE="${_IMAGE_PATH}@${ImageDigest}"
     wget https://github.com/slsa-framework/slsa-verifier/releases/download/v1.4.1-rc/slsa-verifier-linux-amd64
