@@ -16,8 +16,6 @@ steps:
     ImageDigest="$(gcloud container images list-tags --format='get(digest)' ${_IMAGE_PATH} | head -1)"
     skaffold deploy -p cloudbuild --tag $ImageDigest
 substitutions:
-  _SEVERITY: CRITICAL
-  _NEGLECT_CVE: CVE-2022-1292
   _CLUSTER_NAME: k8s-summit
   _CLUSTER_LOCATION: asia-east1-a
   _IMAGE_PATH: asia-east1-docker.pkg.dev/shawn-demo-2022/image-repos/hello-k8s-summit
