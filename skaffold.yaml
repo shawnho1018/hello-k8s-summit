@@ -16,3 +16,7 @@ profiles:
 - name: cloudbuild
   build:
     googleCloudBuild: {}
+  deploy:
+    kustomize:
+      paths:
+      - kubernetes-manifests/dev-bd

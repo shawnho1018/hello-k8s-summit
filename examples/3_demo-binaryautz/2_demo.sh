@@ -11,3 +11,5 @@ slsa-verifier verify-image "$IMAGE" \
 --provenance-path provenance.json \
 --source-uri ${SOURCE_URI} \
 --builder-id=https://cloudbuild.googleapis.com/GoogleHostedWorker
+
+kubectl run test-pod --image ${IMAGE}
