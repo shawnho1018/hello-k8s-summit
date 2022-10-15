@@ -54,10 +54,6 @@ steps:
   args:
   - '-c'
   - |
-    ImageDigest="$(gcloud container images list-tags --format='get(digest)' ${_IMAGE_PATH} | head -1)"
-    pushd kubernetes-manifests/dev-cb
-    kustomize edit set image IMAGE_LOCATION ${_IMAGE_PATH}@${ImageDigest}
-    popd
     skaffold deploy -p cloudbuild --build-artifacts=/workspace/image.json
 substitutions:
   _SEVERITY: CRITICAL

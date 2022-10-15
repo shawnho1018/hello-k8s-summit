@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: server
-        image: IMAGE_LOCATION
+        image: asia-east1-docker.pkg.dev/shawn-demo-2022/image-repos/hello-k8s-summit
         ports:
         - containerPort: 8080
         env:
