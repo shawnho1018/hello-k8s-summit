@@ -15,18 +15,18 @@ steps:
     wget https://github.com/slsa-framework/slsa-verifier/releases/download/v1.4.1-rc/slsa-verifier-linux-amd64
     mv slsa-verifier-linux-amd64 slsa-verifier
     IMAGE=$(cat /workspace/image.json | jq -r '.builds[0].tag' | sed 's/\:latest//g')
-    gcloud artifacts docker images describe ${IMAGE} --format json --show-provenance > /workspace/provenance.json
+    gcloud artifacts docker images describe "${IMAGE}" --format json --show-provenance > /workspace/provenance.json
     cat /workspace/provenance.json
-    slsa-verifier verify-image "$IMAGE" \
+    ./slsa-verifier verify-image "${IMAGE}" \
       --provenance-path provenance.json \
       --source-uri https://github.com/shawnho1018/hello-k8s-summit \
       --builder-id=https://cloudbuild.googleapis.com/GoogleHostedWorker
     
-    gcloud artifacts docker images scan ${_IMAGE_PATH}:latest \
+    gcloud artifacts docker images scan ${IMAGE}:latest \
       --format='value(response.scan)' --remote > /workspace/scan_id.txt
 
-- id: 'Check code & cve & sign image'
-  name: 'gcr.io/shawn-demo-2022/cosign:latest'
+- id: 'Check cve'
+  name: gcr.io/google.com/cloudsdktool/cloud-sdk
   entrypoint: 'bash'
   args:
   - '-c'
@@ -54,5 +54,7 @@ steps:
   - '-c'
   - |
     skaffold deploy -p cloudbuild --build-artifacts=/workspace/image.json
-
+substitutions:
+  _SEVERITY: CRITICAL
+  _NEGLECT_CVE: CVE-2022-1292
 timeout: 1200s
