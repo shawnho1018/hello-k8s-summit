@@ -1,8 +1,0 @@
-{
-  "image_summary": {
-    "digest": "sha256:736853be5e2b9cf71590afc3ebdbf28091c986a466346ceea510c42b23a3d4e0",
-    "fully_qualified_digest": "asia-east1-docker.pkg.dev/shawn-demo-2022/image-repos/hello-k8s-summit@sha256:736853be5e2b9cf71590afc3ebdbf28091c986a466346ceea510c42b23a3d4e0",
-    "registry": "asia-east1-docker.pkg.dev",
-    "repository": "image-repos"
-  }
-}

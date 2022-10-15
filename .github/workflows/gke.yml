@@ -112,6 +112,6 @@ jobs:
       run: |-
         # replacing the image name in the k8s template
         pushd ${{ github.workspace }}/kubernetes-manifests/dev
-        kustomize edit set image IMAGE_LOCATION=$REPO_NAME/$PROJECT_ID/$REPO_FOLDER/$IMAGE_NAME:$GITHUB_SHA
+        kustomize edit set image $REPO_NAME/$PROJECT_ID/$REPO_FOLDER/$IMAGE_NAME=$REPO_NAME/$PROJECT_ID/$REPO_FOLDER/$IMAGE_NAME:$GITHUB_SHA
         kustomize build ./ | kubectl apply -f -
         popd
