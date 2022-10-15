@@ -5,7 +5,7 @@ steps:
   args:
   - '-c'
   - |
-    skaffold build --file-output /workspace/image.json
+    skaffold build -p cloudbuild --file-output /workspace/image.json
 - id: 'validate signature'
   name: gcr.io/google.com/cloudsdktool/cloud-sdk
   entrypoint: 'bash'
@@ -13,7 +13,6 @@ steps:
   - '-c'
   - |
     ImageDigest="$(gcloud container images list-tags --format='get(digest)' ${_IMAGE_PATH} | head -1)"
-    apt install -y wget
     curl https://github.com/slsa-framework/slsa-verifier/releases/download/v1.4.1-rc/slsa-verifier-linux-amd64 --output ./slsa-verifier
     chmod +x ./slsa-verifier
     gcloud artifacts docker images describe ${_IMAGE_PATH}@${ImageDigest} --format json --show-provenance > /workspace/provenance.json
