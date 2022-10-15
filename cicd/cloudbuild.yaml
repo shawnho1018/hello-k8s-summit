@@ -1,0 +1,61 @@
+steps:
+- id: 'buildImage'
+  name: 'gcr.io/k8s-skaffold/skaffold:v1.35.1'
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    skaffold build -p cloudbuild --file-output /workspace/image.json
+- id: 'validate signature'
+  name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    ImageDigest="$(gcloud container images list-tags --format='get(digest)' ${_IMAGE_PATH} | head -1)"
+    curl https://github.com/slsa-framework/slsa-verifier/releases/download/v1.4.1-rc/slsa-verifier-linux-amd64 --output ./slsa-verifier
+    chmod +x ./slsa-verifier
+    gcloud artifacts docker images describe ${_IMAGE_PATH}@${ImageDigest} --format json --show-provenance > /workspace/provenance.json
+    cat /workspace/provenance.json
+    ./slsa-verifier verify-image ${_IMAGE_PATH}@${ImageDigest} \
+      --provenance-path provenance.json \
+      --source-uri https://github.com/shawnho1018/hello-k8s-summit \
+      --builder-id=https://cloudbuild.googleapis.com/GoogleHostedWorker
+    
+    gcloud artifacts docker images scan ${_IMAGE_PATH}@${ImageDigest} \
+      --format='value(response.scan)' --remote > /workspace/scan_id.txt
+
+- id: 'Check cve'
+  name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    echo "Check Image CVE"
+    gcloud artifacts docker images list-vulnerabilities $(cat /workspace/scan_id.txt) \
+    --format='value(vulnerability.effectiveSeverity, vulnerability.shortDescription)' > result.txt
+    cat result.txt
+    if (cat result.txt | grep -Fxq $_SEVERITY | grep -vFxq $_NEGLECT_CVE); then
+      echo 'Failed vulnerability check' && exit 1
+    else
+      echo 'Passed the CVE vulnerability check'
+    fi
+- id: 'provide SBOM'
+  name: 'spdx/spdx-sbom-generator'
+  entrypoint: sh
+  args:
+  - '-c'
+  - |
+    /spdx-sbom-generator -p . -o /workspace/
+- id: 'trigger skaffold deploy'
+  name: 'gcr.io/k8s-skaffold/skaffold:v1.35.1'
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    skaffold deploy -p cloudbuild --build-artifacts=/workspace/image.json
+substitutions:
+  _SEVERITY: CRITICAL
+  _NEGLECT_CVE: CVE-2022-1292
+  _IMAGE_PATH: asia-east1-docker.pkg.dev/shawn-demo-2022/image-repos/hello-k8s-summit
+timeout: 1200s

@@ -6,7 +6,3 @@ kind: Kustomization
 resources:
 - 0_hello-ns.yaml
 - ../base
-images:
-- name: IMAGE_LOCATION
-  newName: sia-east1-docker.pkg.dev/shawn-demo-2022/image-repos/hello-k8s-summit
-  newTag: latest

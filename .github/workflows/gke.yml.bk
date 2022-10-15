@@ -1,0 +1,117 @@
+name: Deploy simple hello app to GKE
+
+on:
+  push:
+    branches:
+    - master
+
+env:
+  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  GKE_CLUSTER: k8s-summit    # TODO: update to cluster name
+  GKE_ZONE: asia-east1-a	   # TODO: update to cluster zone
+  DEPLOYMENT_NAME: go-hello-world # TODO: update deployment name if changed in deployment.yaml
+  REPO_NAME: "asia-east1-docker.pkg.dev"
+  REPO_FOLDER: "image-repos"
+  COSIGN_PASSWORD: "demo-k8s-summit"
+  IMAGE_NAME: hello-k8s-summit
+jobs:
+  build:
+    name: Build
+    runs-on: self-hosted
+    permissions:
+      contents: read
+      packages: write
+      id-token: write # Needed to create an OIDC token for keyless signing.
+      actions: read # Needed to read workflow info.      
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v0'
+      with:
+        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+    # Setup gcloud CLI
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v0
+    # Using gcloud CLI to assist docker authentication
+    - name: Docker configuration
+      run: |-
+        gcloud --quiet auth configure-docker ${REPO_NAME}
+    # Demo Purpose for slsa-signature generator with golang artifact
+    - name: Set up slsa-default-generator
+      id: set-slsa-generator
+      shell: bash
+      env:
+        GITHUB_CONTEXT: "${{ toJSON(github) }}"      
+      run: |-
+        curl -sfLo slsa-github-generator https://github.com/slsa-framework/slsa-github-generator/releases/download/v1.2.0/slsa-generator-generic-linux-amd64
+        chmod u+x ./slsa-github-generator
+        echo "foo" > artifact1
+        ./slsa-github-generator attest -g "slsa3.intoto.jsonl" --subjects $(sha256sum artifact1 | base64 -w0)
+        cat slsa3.intoto.jsonl
+    - name: Dump GitHub context
+      id: github_context_step
+      run: echo '${{ toJSON(github) }}'
+    # Build and push image to Google Container Registry
+    - name: Build
+      run: |-
+        gcloud builds submit \
+          --quiet \
+          --tag "$REPO_NAME/$PROJECT_ID/$REPO_FOLDER/$IMAGE_NAME:$GITHUB_SHA"
+    - name: Show my version
+      run: 'echo "version ${{ steps.tag.outputs.value }}"'
+    - name: Install Cosign
+      uses: sigstore/cosign-installer@main
+    - name: Check install!
+      run: cosign version      
+    - name: Sign Image
+      id: sign
+      run: |
+        image_name="$REPO_NAME/$PROJECT_ID/$REPO_FOLDER/$IMAGE_NAME:$GITHUB_SHA"
+        echo "${image_name}"
+        gcloud artifacts docker images describe ${image_name} --show-provenance --format json >> ${{ github.workspace }}/provenance.json
+        cat ${{ github.workspace }}/provenance.json | jq -r '.provenance_summary.provenance[0].envelope.payload' | base64 -d | jq -r .predicate >> ${{ github.workspace }}/predicate.json
+        gsutil cp gs://${PROJECT_ID}/cosign.key ${{ github.workspace }}/cosign.key
+        cosign attest --key ${{ github.workspace }}/cosign.key --predicate ${{ github.workspace }}/predicate.json ${image_name}
+
+  setup-and-deploy:
+    needs: [build]
+    name: Setup and Deploy
+    runs-on: self-hosted
+    # Add "id-token" with the intended permissions.
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    # Alternative option - authentication via credentials json
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v0'
+      with:
+        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+
+    # Setup gcloud CLI
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v0
+
+    # Get the GKE credentials so we can deploy to the cluster
+    - name: Set up GKE credentials
+      run: |-
+        gcloud container clusters get-credentials "$GKE_CLUSTER" --zone "$GKE_ZONE"
+        gcloud auth configure-docker ${REPO_NAME}
+    - name: Set up Kubectl and Kustomize
+      run: |-
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        chmod u+x ./kubectl
+        curl -sfLo kustomize https://github.com/kubernetes-sigs/kustomize/releases/download/v3.1.0/kustomize_3.1.0_linux_amd64
+        chmod u+x ./kustomize
+        echo "$(pwd)" >> $GITHUB_PATH
+
+    - name: Deploy
+      run: |-
+        # replacing the image name in the k8s template
+        pushd ${{ github.workspace }}/kubernetes-manifests/dev
+        kustomize edit set image IMAGE_LOCATION=$REPO_NAME/$PROJECT_ID/$REPO_FOLDER/$IMAGE_NAME:$GITHUB_SHA
+        kustomize build ./ | kubectl apply -f -
+        popd
