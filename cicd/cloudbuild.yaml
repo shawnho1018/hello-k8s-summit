@@ -9,7 +9,7 @@ steps:
   - '-c'
   - |
     apt-get install -y jq
-    scancode -clipeu --verbose /scan --processes `expr $(nproc --all) - 1` --json /workspace/licenses.json
+    scancode -clp --verbose /scan --processes `expr $(nproc --all) - 1` --json /workspace/licenses.json
     cat /workspace/licenses.json | jq '.[][].licenses | select (length>0)'
 - id: 'buildImage'
   name: 'gcr.io/k8s-skaffold/skaffold:v1.35.1'
