@@ -75,7 +75,11 @@ steps:
     skaffold deploy -p cloudbuild --build-artifacts=/workspace/image.json
 - id: 'DSAT Test with Zap'
   name: owasp/zap2docker-stable
-  args: [ 'zap-baseline.py', '-t', 'http://35.189.173.44' ]
+  entrypoint: 'bash'
+  args: 
+  - '-c'
+  - |
+    zap-baseline.py -t http://35.189.173.44
 
 substitutions:
   _SEVERITY: CRITICAL
