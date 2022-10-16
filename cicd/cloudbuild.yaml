@@ -6,7 +6,6 @@ steps:
   - '-c'
   - |
     export
-    echo ${HOME}
     zap-baseline.py -t http://35.189.173.44
 
 substitutions:
