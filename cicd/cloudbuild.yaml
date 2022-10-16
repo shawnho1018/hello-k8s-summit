@@ -83,6 +83,7 @@ steps:
   args: 
   - '-c'
   - |
+    touch /workspace/.zap/zap.yaml && touch /workspace/.zap/zap_out.json
     zap-baseline.py -t http://35.189.173.44
 
 substitutions:
