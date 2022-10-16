@@ -1,86 +1,12 @@
 steps:
-- id: 'check key/secret'
-  name: gcr.io/google.com/cloudsdktool/cloud-sdk
-  entrypoint: bash
-  args:
-  - '-c'
-  - |
-    apt-get install -y wget
-    wget https://github.com/zricethezav/gitleaks/releases/download/v8.15.0/gitleaks_8.15.0_linux_x64.tar.gz
-    tar zxvf gitleaks_8.15.0_linux_x64.tar.gz
-    ./gitleaks detect --source . -r /workspace/gitleak.txt -v || exit 0
-- id: 'license check'
-  name: 'beevelop/scancode'
-  entrypoint: 'bash'
-  args:
-  - '-c'
-  - |
-    apt-get install -y jq
-    scancode -clp --verbose . --processes `expr $(nproc --all) - 1` --json /workspace/licenses.json
-    cat /workspace/licenses.json | jq '.[][].licenses | select (length>0)'
-- id: 'buildImage'
-  name: 'gcr.io/k8s-skaffold/skaffold:v1.35.1'
-  entrypoint: 'bash'
-  args:
-  - '-c'
-  - |
-    skaffold build -p cloudbuild --file-output /workspace/image.json
-- id: 'validate signature'
-  name: 'gcr.io/shawn-demo-2022/cosign:latest'
-  entrypoint: 'bash'
-  args:
-  - '-c'
-  - |
-    ImageDigest="$(gcloud container images list-tags --format='get(digest)' ${_IMAGE_PATH} | head -1)"
-    curl https://github.com/slsa-framework/slsa-verifier/releases/download/v1.4.1-rc/slsa-verifier-linux-amd64 --output ./slsa-verifier
-    chmod +x ./slsa-verifier
-    gcloud artifacts docker images describe ${_IMAGE_PATH}@${ImageDigest} --format json --show-provenance > /workspace/provenance.json
-    source_url=$(cat /workspace/provenance.json | jq -r '.provenance_summary.provenance[0].build.intotoStatement.slsaProvenance.materials[0].uri')
-
-    ./slsa-verifier verify-image ${_IMAGE_PATH}@${ImageDigest} \
-      --provenance-path provenance.json \
-      --source-uri ${source_url} \
-      --builder-id=https://cloudbuild.googleapis.com/GoogleHostedWorker
-    
-    gcloud artifacts docker images scan ${_IMAGE_PATH}@${ImageDigest} \
-      --format='value(response.scan)' --remote > /workspace/scan_id.txt
-
-- id: 'Check cve'
-  name: gcr.io/google.com/cloudsdktool/cloud-sdk
-  entrypoint: 'bash'
-  args:
-  - '-c'
-  - |
-    echo "Check Image CVE"
-    gcloud artifacts docker images list-vulnerabilities $(cat /workspace/scan_id.txt) \
-    --format='value(vulnerability.effectiveSeverity, vulnerability.shortDescription)' > result.txt
-    cat result.txt
-    if (cat result.txt | grep -Fxq $_SEVERITY | grep -vFxq $_NEGLECT_CVE); then
-      echo 'Failed vulnerability check' && exit 1
-    else
-      echo 'Passed the CVE vulnerability check'
-    fi
-- id: 'provide SBOM'
-  name: 'spdx/spdx-sbom-generator'
-  entrypoint: sh
-  args:
-  - '-c'
-  - |
-    /spdx-sbom-generator -p . -o /workspace/
-- id: 'trigger skaffold deploy'
-  name: 'gcr.io/k8s-skaffold/skaffold:v1.35.1'
-  entrypoint: 'bash'
-  args:
-  - '-c'
-  - |
-    gcloud container clusters get-credentials ${_CLUSTER_NAME} --zone ${_CLUSTER_LOCATION} --project ${_PROJECT_ID}
-    skaffold deploy -p cloudbuild --build-artifacts=/workspace/image.json
 - id: 'DSAT Test with Zap'
   name: owasp/zap2docker-stable
   entrypoint: 'bash'
   args: 
   - '-c'
   - |
+    export
+    echo ${HOME}
     zap-baseline.py -t http://35.189.173.44
 
 substitutions:
