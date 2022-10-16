@@ -76,14 +76,11 @@ steps:
 #     gcloud container clusters get-credentials ${_CLUSTER_NAME} --zone ${_CLUSTER_LOCATION} --project ${_PROJECT_ID}
 #     skaffold deploy -p cloudbuild --build-artifacts=/workspace/image.json
 - id: 'DSAT Test with Zap'
-  name: owasp/zap2docker-stable
+  name: gcr.io/shawn-demo-2022/zap:latest
   entrypoint: 'bash'
-  env:
-  - 'HOME=/workspace/.zap'
   args: 
   - '-c'
   - |
-    echo "123" > /workspace/.zap/zap.yaml && echo "456" > /workspace/.zap/zap_out.json
     zap-baseline.py -t http://35.189.173.44
 
 substitutions:
