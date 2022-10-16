@@ -1,4 +1,7 @@
 steps:
+- id: 'check key/secret'
+  name: 'zricethezav/gitleaks:latest'
+  args: ['detect', '-v']
 - id: 'license check'
   name: 'beevelop/scancode'
   entrypoint: 'bash'
@@ -6,7 +9,6 @@ steps:
   - '-c'
   - |
     apt-get install -y jq
-    ls -l
     scancode -clp --verbose . --processes `expr $(nproc --all) - 1` --json /workspace/licenses.json
     cat /workspace/licenses.json | jq '.[][].licenses | select (length>0)'
 - id: 'buildImage'
