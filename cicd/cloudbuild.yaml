@@ -1,4 +1,16 @@
 steps:
+- id: 'check key/secret'
+  name: 'zricethezav/gitleaks:latest'
+  args: ['detect', '--source .', '-v']
+- id: 'license check'
+  name: 'beevelop/scancode'
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    apt-get install -y jq
+    scancode -clipeu --verbose /scan --processes `expr $(nproc --all) - 1` --json /workspace/licenses.json
+    cat /workspace/licenses.json | jq '.[][].licenses | select (length>0)'
 - id: 'buildImage'
   name: 'gcr.io/k8s-skaffold/skaffold:v1.35.1'
   entrypoint: 'bash'
@@ -56,6 +68,10 @@ steps:
   - |
     gcloud container clusters get-credentials ${_CLUSTER_NAME} --zone ${_CLUSTER_LOCATION} --project ${_PROJECT_ID}
     skaffold deploy -p cloudbuild --build-artifacts=/workspace/image.json
+- id: 'DSAT Test with Zap'
+  name: owasp/zap2docker-stable
+  args: [ 'zap-baseline.py', '-t', 'http://35.189.173.44' ]
+
 substitutions:
   _SEVERITY: CRITICAL
   _NEGLECT_CVE: CVE-2022-1292
