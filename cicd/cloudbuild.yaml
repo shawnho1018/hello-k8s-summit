@@ -81,8 +81,7 @@ steps:
   args: 
   - '-c'
   - |
-    ip=$(kubectl get svc -n dev-cb -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}')
-    zap-baseline.py -t http://${ip} || exit 0
+    zap-baseline.py -t http://${_IP_ADDRESS} || exit 0
 
 substitutions:
   _SEVERITY: CRITICAL
@@ -91,3 +90,4 @@ substitutions:
   _CLUSTER_LOCATION: asia-east1-a
   _IMAGE_PATH: asia-east1-docker.pkg.dev/shawn-demo-2022/image-repos/hello-k8s-summit
   _PROJECT_ID: shawn-demo-2022
+  _IP_ADDRESS: "34.81.44.232"
