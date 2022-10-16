@@ -1,7 +1,7 @@
 steps:
 - id: 'check key/secret'
   name: 'zricethezav/gitleaks:latest'
-  args: ['detect', '-v']
+  args: ['detect', '-v', '-r', '/workspace/']
 - id: 'license check'
   name: 'beevelop/scancode'
   entrypoint: 'bash'
