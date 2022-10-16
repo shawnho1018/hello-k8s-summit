@@ -6,7 +6,8 @@ steps:
   - '-c'
   - |
     export HOME=`pwd`
-    touch zap.yaml
+    echo "test123" > /workspace/zap.yaml && echo "result123" > /workspace/zap_out.json
+    ls -l /workspace/
     zap-baseline.py -t http://35.189.173.44
 
 substitutions:
