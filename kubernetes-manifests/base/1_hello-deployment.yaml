@@ -17,9 +17,18 @@ spec:
       labels:
         app: go-hello-world
     spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
       containers:
       - name: server
         image: asia-east1-docker.pkg.dev/shawn-demo-2022/image-repos/hello-k8s-summit
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - all
         ports:
         - containerPort: 8080
         env:
