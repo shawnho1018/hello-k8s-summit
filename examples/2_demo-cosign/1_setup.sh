@@ -1,23 +1,29 @@
 #!/bin/bash
+export NS="cosign-system"
+export secret_name="cosign-secret"
+# Generate Cosign Key/PUB/PASSWORD
+cosign generate-key-pair k8s://kube-system/${secret_name}
+pub_key=$(kubectl get secret ${secret_name} -n kube-system -o jsonpath='{.data.cosign\.pub}')
+
 # install policy-controller helm chart
 helm repo add sigstore https://sigstore.github.io/helm-charts
 helm repo update
-kubectl create namespace cosign-system
-helm install policy-controller -n cosign-system sigstore/policy-controller --devel
+kubectl create namespace ${NS}
+helm install policy-controller -n ${NS} sigstore/policy-controller --devel
 
-kubectl wait --for=condition=Ready pod -l app.kubernetes.io/instance=policy-controller -n cosign-system
+kubectl wait --for=condition=Ready pod -l app.kubernetes.io/instance=policy-controller -n ${NS}
 
 # Provide Public Key for Policy Controller
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 data:
-  cosign.pub: LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFZURtL0d4MUJjc2NtZUV3SGxYMEovdS90aUNEUApZSWVwSkZyNzF4WjBUR0pnVy9FU3pwM3dmOTdMMEU5bW5LTHA1dHBGSkloVEVhKzNmeWFMclNtMUR3PT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==
+  cosign.pub: ${pub_key}
 immutable: true
 kind: Secret
 metadata:
   annotations:
   name: mysecret
-  namespace: cosign-system
+  namespace: ${NS}
 type: Opaque
 EOF
 

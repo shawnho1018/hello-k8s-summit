@@ -1,5 +1,15 @@
-# Kubernetes Hello World with Cloud Code
+# Demonstration for Software Delivery Shield (IThome Kubernetes Summit 2022)
+This is the public github with code used to demonstrate in Kubernetes Summit 2022. The entire demonstration separate into 4 parts:
+The first 3 labs was shown under examples folder. The detailed explanation could be found in each of the folder. Here is the overview of the content:
 
+## Software Delivery Shield Demo Projects
+1. examples/1_demo-intoto: This workshop refers to the [in-toto demo lab](https://github.com/in-toto/demo). In-toto is a software delivery secure framework, which served as a good example to understand the entire workflow in manual mode as well as the meaning of provenance. 
+
+2. examples/2_demo-cosign: This workshop mainly adopts [sigstore/cosign](https://github.com/sigstore/cosign) project as well as [sigstore/policy-controller](https://github.com/sigstore/policy-controller). It demonstrated how to utilize cosign to attest the container image and to enforce ClusterImagePolicy to enforce the existence of the attestations. 
+
+3. examples/3_demo-binaryauthz: This workshop is to demonstrate a similar process as workshop 2 but with all the toolchains, managed by GCP. Instead of Cosign, [CloudBuild](https://cloud.google.com/build/docs/securing-builds/view-build-provenance) managed service attests the container image with in-toto attestations. In the deployment time, [Binary Authorization](https://cloud.google.com/binary-authorization) is used to replace cosign/policy-controller.
+
+## Sample Application: 
 "Hello World" is a Kubernetes application that contains a single
 [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) and a corresponding
 [Service](https://kubernetes.io/docs/concepts/services-networking/service/). The Deployment contains a web server that renders a simple webpage.
@@ -42,40 +52,3 @@ For details on how to use this sample as a template in Cloud Code, read the docu
 4.  To stop the application, click the stop icon on the Debug Toolbar.
 
 ---
-## Getting Started with IntelliJ
-
-### Run the app locally with minikube
-
-#### Edit run configuration
-1. Click the configuration dropdown in the top taskbar and then click **Edit Configurations**.
-![image](./img/edit-configurations.png)
-
-   The **Develop on Kubernetes** configuration watches for changes, then uses [skaffold](https://skaffold.dev/docs/) to rebuild and rerun your app. You can customize your deployment by making changes to this run configuration or by creating a new Cloud Code: Kubernetes run configuration.
-
-
-3. Under **Run > Deployment**, select 'Deploy locally to a minikube cluster'.
-![image](./img/run-debug-dialog.png)
-
-4. Click **OK** to save your configuration. 
-
-
-#### Run the app on minikube
-1. Select **Develop on Kubernetes** from the configuration dropdown and click the run icon. Cloud Code runs your app in a local [minikube](ttps://minikube.sigs.k8s.io/docs/start/) cluster.  
-![image](./img/edit-configurations.png)
-
-
-2. View the build process in the output window. When the deployment is successful, you're notified that new service URLs are available. Click the Service URLs tab to view the URL(s), then click the URL link to open your browser with your running application.  
-![image](./img/service-urls.png)
-
-3. To stop the application, click the stop icon next to the configuration dropdown.
-
----
-## Sign up for User Research
-
-We want to hear your feedback!
-
-The Cloud Code team is inviting our user community to sign-up to participate in Google User Experience Research. 
-
-If you’re invited to join a study, you may try out a new product or tell us what you think about the products you use every day. At this time, Google is only sending invitations for upcoming remote studies. Once a study is complete, you’ll receive a token of thanks for your participation such as a gift card or some Google swag. 
-
-[Sign up using this link](https://google.qualtrics.com/jfe/form/SV_4Me7SiMewdvVYhL?reserved=1&utm_source=In-product&Q_Language=en&utm_medium=own_prd&utm_campaign=Q1&productTag=clou&campaignDate=January2021&referral_code=UXbT481079) and answer a few questions about yourself, as this will help our research team match you to studies that are a great fit.
