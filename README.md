@@ -9,6 +9,15 @@ The first 3 labs was shown under examples folder. The detailed explanation could
 
 3. examples/3_demo-binaryauthz: This workshop is to demonstrate a similar process as workshop 2 but with all the toolchains, managed by GCP. Instead of Cosign, [CloudBuild](https://cloud.google.com/build/docs/securing-builds/view-build-provenance) managed service attests the container image with in-toto attestations. In the deployment time, [Binary Authorization](https://cloud.google.com/binary-authorization) is used to replace cosign/policy-controller.
 
+## Github Action (SLSA security Level 3 CI (with Simple CD) pipeline)
+The second part of the demo is to create a SLSA security level 3 pipeline using Github Action. The pipeline is provided under .github/gke.yml. Our pipeline utilized self-hosted runners in local GKE. To properly install self-hosted runner, please refer to [github action-runner-controller project](https://github.com/actions-runner-controller/actions-runner-controller). 
+
+Our pipeline use Build job for CI and Setup-and-Deploy job for a simple CD. Inside the CI flow, we include cosign attest step to help audience understand the signing process. The private key requires for the signing is pre-stored in GCS and clone into the pipeline when needed. One of the steps, set-slsa-generator, was supposed to use [slsa-github-generator](https://github.com/slsa-framework/slsa-github-generator#builders) to produce signature instead of cosign. However, the container signing mechanism in [slsa-github-generator](https://github.com/slsa-framework/slsa-github-generator#builders) is still WIP when authoring this demo. This step only provide signature to the golang binary instead of the container image. 
+
+As for CD flow, please pre-run examples/3_demo-binaryautz demo in advance to have ClusterImagePolicy crd pre-configured in the cluster. Audience is welcome to deploy the container image which does not pass the CI pipeline.
+
+To demonstrate the CI is ephemeral, we trigger the pipeline and observe the self-hosted runner behavior. You would observe when the step completed, the running container would be retired, as shown below. ![Retired container](examples/images/retire-container.gif)
+
 ## Sample Application: 
 "Hello World" is a Kubernetes application that contains a single
 [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) and a corresponding
